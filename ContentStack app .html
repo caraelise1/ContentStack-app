@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Content Stack — 30 Threads post ideas, built around your voice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #F3ECDF;
+    --card: #FFFDF8;
+    --espresso: #4A3323;
+    --espresso-dark: #342317;
+    --ink: #3B2C21;
+    --ink-soft: #8C7A67;
+    --line: #E4D8C3;
+    --sage: #6E8F72;
+    --ochre: #BD8B3F;
+    --slate: #4E6B85;
+    --teal: #4A8C87;
+    --mauve: #8C5D74;
+    --rust: #A85436;
+    --radius: 16px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.display{ font-family:'Space Grotesk',sans-serif; letter-spacing:-0.01em; }
+  .shell{ max-width:560px; margin:0 auto; padding:32px 20px 28px; min-height:100vh; display:flex; flex-direction:column; }
+  header.top{ text-align:center; margin-bottom:24px; }
+  .brand-title{ font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:1.7rem; color:var(--espresso); margin:0; }
+  .brand-sub{ color:var(--ink-soft); font-size:0.9rem; margin:6px 0 0; }
+  .progress-track{ height:5px; background:var(--line); border-radius:99px; overflow:hidden; margin-bottom:26px; }
+  .progress-fill{ height:100%; background:var(--espresso); border-radius:99px; transition:width .35s ease; width:25%; }
+  .stepnum{ color:var(--ink-soft); font-size:0.82rem; margin-bottom:6px; font-weight:500; }
+  .stack-wrap{ position:relative; flex:1; display:flex; align-items:flex-start; }
+  .card{ background:var(--card); border-radius:var(--radius); padding:28px 24px 26px; width:100%;
+    border:1px solid var(--line); box-shadow:0 16px 32px -20px rgba(74,51,35,0.35); }
+  .step{ display:none; }
+  .step.active{ display:block; }
+  .step h1{ font-size:1.28rem; margin:0 0 6px; line-height:1.25; color:var(--espresso); }
+  .step .sub{ color:var(--ink-soft); font-size:0.9rem; margin:0 0 18px; line-height:1.45; }
+  label{ display:block; font-size:0.82rem; font-weight:600; margin:15px 0 6px; color:var(--ink); }
+  label:first-of-type{ margin-top:0; }
+  .optional{ font-weight:400; color:var(--ink-soft); }
+  input[type="text"], textarea{ width:100%; font-family:'Inter',sans-serif; font-size:0.97rem; padding:12px 13px; border-radius:10px;
+    border:1.5px solid var(--line); background:#fff; color:var(--ink); outline:none; transition:border-color .15s; }
+  input[type="text"]:focus, textarea:focus{ border-color:var(--espresso); }
+  textarea{ resize:vertical; min-height:56px; }
+  .pillar-row{ display:flex; gap:8px; margin-bottom:8px; align-items:center; }
+  .pillar-row input{ flex:1; }
+  .pillar-remove{ background:none; border:none; color:var(--ink-soft); font-size:1.3rem; line-height:1; cursor:pointer; padding:4px 8px; }
+  .pillar-remove:hover{ color:var(--espresso); }
+  .add-pillar{ background:none; border:1.5px dashed var(--line); color:var(--ink-soft); font-size:0.85rem; font-weight:600; padding:9px 12px;
+    border-radius:10px; cursor:pointer; width:100%; margin-top:4px; }
+  .add-pillar:hover{ border-color:var(--espresso); color:var(--espresso); }
+  .choice-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:4px; }
+  .choice-grid.thirds{ grid-template-columns:1fr 1fr 1fr; }
+  .choice-opt{ border:1.5px solid var(--line); border-radius:12px; padding:13px 12px; cursor:pointer; background:#fff; transition:.15s; }
+  .choice-opt strong{ display:block; font-size:0.9rem; margin-bottom:3px; color:var(--ink); }
+  .choice-opt span{ font-size:0.77rem; color:var(--ink-soft); line-height:1.3; display:block; }
+  .choice-opt.selected{ border-color:var(--espresso); background:#F1E7D8; box-shadow:0 0 0 1px var(--espresso); }
+  #custom-voice-wrap{ display:none; margin-top:4px; }
+  .nav-row{ display:flex; gap:10px; margin-top:24px; }
+  button.primary{ flex:1; background:var(--espresso); color:#FFFDF8; border:none; font-family:'Inter',sans-serif; font-weight:700; font-size:1rem;
+    padding:14px 18px; border-radius:12px; cursor:pointer; transition:background .15s, transform .1s; }
+  button.primary:hover{ background:var(--espresso-dark); }
+  button.primary:active{ transform:scale(0.98); }
+  button.primary:disabled{ background:#CBB9A4; cursor:not-allowed; }
+  button.ghost{ background:none; border:1.5px solid var(--line); color:var(--ink-soft); font-weight:600; font-size:0.95rem; padding:14px 16px;
+    border-radius:12px; cursor:pointer; }
+  button.ghost:hover{ border-color:var(--espresso); color:var(--espresso); }
+  .hint{ font-size:0.76rem; color:var(--ink-soft); margin-top:14px; line-height:1.4; }
+
+  #result-step{ display:none; }
+  .result-head{ margin-bottom:16px; }
+  .result-head h1{ color:var(--espresso); font-size:1.4rem; margin:0 0 4px; }
+  .result-head p{ margin:0; color:var(--ink-soft); font-size:0.88rem; }
+  .result-actions{ display:flex; gap:8px; margin-bottom:22px; }
+  .result-actions button{ flex:1; padding:12px; border-radius:12px; font-weight:700; font-size:0.88rem; cursor:pointer; }
+  #copy-all-btn{ background:var(--espresso); color:#FFFDF8; border:none; }
+  #copy-all-btn:hover{ background:var(--espresso-dark); }
+  #reset-btn{ background:none; border:1.5px solid var(--line); color:var(--ink-soft); }
+  #reset-btn:hover{ border-color:var(--espresso); color:var(--espresso); }
+  .pillar-block{ margin-bottom:22px; }
+  .pillar-title{ display:inline-flex; align-items:center; gap:7px; background:var(--espresso); color:#FFFDF8; font-weight:700; font-size:0.86rem;
+    padding:6px 12px; border-radius:99px; margin-bottom:10px; }
+  .idea-card{ background:var(--card); border-radius:12px; padding:14px 15px; margin-bottom:9px; border:1px solid var(--line); }
+  .idea-top{ display:flex; align-items:center; justify-content:space-between; margin-bottom:7px; gap:8px; }
+  .idea-num{ font-family:'Space Grotesk',sans-serif; font-weight:700; color:var(--ink-soft); font-size:0.78rem; }
+  .job-tag{ font-size:0.68rem; font-weight:700; padding:3px 9px; border-radius:99px; letter-spacing:0.01em; color:#fff; white-space:nowrap; }
+  .idea-text{ font-size:0.95rem; line-height:1.5; white-space:pre-line; color:var(--ink); }
+  .copy-one{ background:none; border:none; color:var(--ink-soft); cursor:pointer; font-size:0.78rem; font-weight:600; padding:6px 0 0; }
+  .copy-one:hover{ color:var(--espresso); }
+  .copy-one.copied{ color:var(--sage); }
+  footer.bottom{ text-align:center; color:var(--ink-soft); font-size:0.8rem; margin-top:28px; padding-top:6px; }
+  @media (max-width:400px){ .choice-grid{ grid-template-columns:1fr; } .choice-grid.thirds{ grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <header class="top">
+    <h1 class="brand-title">Content Stack</h1>
+    <p class="brand-sub">30 Threads post ideas, built around your voice and topics.</p>
+  </header>
+
+  <div id="wizard">
+    <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+
+    <div class="stack-wrap">
+      <div class="card">
+
+        <div class="step active" id="step-1">
+          <div class="stepnum">Step 1 of 4</div>
+          <h1>Who's actually behind this account?</h1>
+          <p class="sub">Every idea gets built around this — not dropped into a generic template.</p>
+
+          <label for="niche">Your niche</label>
+          <input type="text" id="niche" placeholder="e.g. Threads growth for beginner creators">
+
+          <label for="audience">Who you want to reach</label>
+          <input type="text" id="audience" placeholder="e.g. moms who've never made a dollar online">
+
+          <label for="talkabout">What you talk about</label>
+          <input type="text" id="talkabout" placeholder="e.g. Threads strategy, faceless content, mindset">
+
+          <label for="sell">What you sell <span class="optional">(leave blank if you're not selling yet)</span></label>
+          <input type="text" id="sell" placeholder="e.g. a $27 Threads growth guide">
+
+          <label for="problem">The problem your audience has</label>
+          <textarea id="problem" placeholder="e.g. they post daily and get almost no views or sales"></textarea>
+
+          <label for="result">The result they actually want</label>
+          <textarea id="result" placeholder="e.g. consistent views, followers who buy, income without showing their face"></textarea>
+
+          <div class="nav-row"><button class="primary" id="to-step-2">Next</button></div>
+        </div>
+
+        <div class="step" id="step-2">
+          <div class="stepnum">Step 2 of 4</div>
+          <h1>How do you sound?</h1>
+          <p class="sub">This is your voice. The ideas get written to sound like you said them, not like a template.</p>
+
+          <div class="choice-grid" id="voice-grid">
+            <div class="choice-opt selected" data-voice="feminine"><strong>Feminine & Punchy</strong><span>Short lines, direct, girl-to-girl</span></div>
+            <div class="choice-opt" data-voice="bold"><strong>Bold & Direct</strong><span>No fluff, imperative, confident</span></div>
+            <div class="choice-opt" data-voice="warm"><strong>Warm & Relatable</strong><span>Friendly, encouraging, soft</span></div>
+            <div class="choice-opt" data-voice="faith"><strong>Faith-Rooted</strong><span>Affirming, purpose-driven</span></div>
+            <div class="choice-opt" data-voice="humor"><strong>Humor-Forward</strong><span>Witty, self-aware, relatable</span></div>
+            <div class="choice-opt" data-voice="custom"><strong>My own voice</strong><span>Describe it or paste an example</span></div>
+          </div>
+
+          <div id="custom-voice-wrap">
+            <label for="custom-framework">Your framework or method <span class="optional">(optional)</span></label>
+            <textarea id="custom-framework" placeholder="Paste your steps, checklist, or signature method — the process you always follow when you post."></textarea>
+
+            <label for="custom-examples">Examples of your style — paste 2-3 real posts</label>
+            <textarea id="custom-examples" placeholder="Three weeks ago this was literally just an experiment.&#10;Now it's generated $1.2K+ in commissions.&#10;900+ new followers.&#10;400K+ views.&#10;All because I finally stopped winging Threads and followed ONE strategy properly.&#10;&#10;REAL TALK: I used to scroll past people making money on Threads thinking… HOW?!&#10;Now I've made $1.2K+ in 3 weeks. Turns out I didn't need to work harder.&#10;I needed a strategy."></textarea>
+
+            <label for="custom-avoid">Words or vibes you don't want <span class="optional">(optional)</span></label>
+            <textarea id="custom-avoid" placeholder="fluff, crickets, unlock, elevate, seamless, anything stiff or corporate"></textarea>
+          </div>
+
+          <label>Right now, are you...</label>
+          <div class="choice-grid thirds" id="stage-grid">
+            <div class="choice-opt selected" data-stage="growing"><strong>Growing</strong></div>
+            <div class="choice-opt" data-stage="selling"><strong>Selling</strong></div>
+            <div class="choice-opt" data-stage="both"><strong>Both</strong></div>
+          </div>
+
+          <div class="nav-row">
+            <button class="ghost" id="back-to-1">Back</button>
+            <button class="primary" id="to-step-3">Next</button>
+          </div>
+        </div>
+
+        <div class="step" id="step-3">
+          <div class="stepnum">Step 3 of 4</div>
+          <h1>What are your topics?</h1>
+          <p class="sub">Add 3–5. These are the buckets your ideas land in — not the job each post does.</p>
+
+          <div id="pillar-list"></div>
+          <button class="add-pillar" id="add-pillar-btn">+ Add another topic</button>
+
+          <div class="nav-row">
+            <button class="ghost" id="back-to-2">Back</button>
+            <button class="primary" id="to-step-4">Next</button>
+          </div>
+        </div>
+
+        <div class="step" id="step-4">
+          <div class="stepnum">Step 4 of 4</div>
+          <h1>Got any real proof?</h1>
+          <p class="sub">Both optional. Real specifics beat generic posts every time — never made up.</p>
+
+          <label for="proof">A real result you can point to <span class="optional">(exact number, timeframe, what changed)</span></label>
+          <textarea id="proof" placeholder="e.g. went from 200 to 4,000 views in 3 weeks after switching my hooks"></textarea>
+
+          <label for="worked">Anything that's already worked <span class="optional">(a post, hook, topic, format)</span></label>
+          <textarea id="worked" placeholder="e.g. my 'normalize' posts always outperform everything else"></textarea>
+
+          <div class="nav-row">
+            <button class="ghost" id="back-to-3">Back</button>
+            <button class="primary" id="generate-btn">Generate 30 ideas</button>
+          </div>
+          <div class="hint">No proof? ContentStack just skips the posts that need it — never fakes it.</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div id="result-step">
+    <div class="result-head">
+      <h1>Your 30 post ideas</h1>
+      <p id="result-sub"></p>
+    </div>
+    <div class="result-actions">
+      <button id="copy-all-btn">Copy all</button>
+      <button id="reset-btn">Start over</button>
+    </div>
+    <div id="results-body"></div>
+  </div>
+
+  <footer class="bottom">by itscaraelise</footer>
+</div>
+
+<script>
+(function(){
+  var state = { niche:"", audience:"", talkabout:"", sell:"", problem:"", result:"",
+    voice:"feminine", customFramework:"", customExamples:"", customAvoid:"", stage:"growing", pillars:[], proof:"", worked:"" };
+
+  var defaultPillars = ["", "", ""];
+  function $(id){ return document.getElementById(id); }
+
+  function renderPillars(){
+    var list = $("pillar-list");
+    list.innerHTML = "";
+    defaultPillars.forEach(function(val, i){
+      var row = document.createElement("div");
+      row.className = "pillar-row";
+      var input = document.createElement("input");
+      input.type = "text";
+      input.placeholder = "Topic " + (i+1) + " e.g. Mindset";
+      input.value = val;
+      input.addEventListener("input", function(){ defaultPillars[i] = input.value; });
+      row.appendChild(input);
+      if(defaultPillars.length > 3){
+        var rm = document.createElement("button");
+        rm.className = "pillar-remove";
+        rm.innerHTML = "&times;";
+        rm.addEventListener("click", function(){ defaultPillars.splice(i,1); renderPillars(); });
+        row.appendChild(rm);
+      }
+      list.appendChild(row);
+    });
+    $("add-pillar-btn").style.display = defaultPillars.length >= 5 ? "none" : "block";
+  }
+  $("add-pillar-btn").addEventListener("click", function(){
+    if(defaultPillars.length < 5){ defaultPillars.push(""); renderPillars(); }
+  });
+  renderPillars();
+
+  document.querySelectorAll("#voice-grid .choice-opt").forEach(function(opt){
+    opt.addEventListener("click", function(){
+      document.querySelectorAll("#voice-grid .choice-opt").forEach(function(o){ o.classList.remove("selected"); });
+      opt.classList.add("selected");
+      state.voice = opt.dataset.voice;
+      $("custom-voice-wrap").style.display = state.voice === "custom" ? "block" : "none";
+    });
+  });
+  document.querySelectorAll("#stage-grid .choice-opt").forEach(function(opt){
+    opt.addEventListener("click", function(){
+      document.querySelectorAll("#stage-grid .choice-opt").forEach(function(o){ o.classList.remove("selected"); });
+      opt.classList.add("selected");
+      state.stage = opt.dataset.stage;
+    });
+  });
+
+  function goToStep(n){
+    document.querySelectorAll(".step").forEach(function(s){ s.classList.remove("active"); });
+    $("step-" + n).classList.add("active");
+    $("progress-fill").style.width = (n/4*100) + "%";
+  }
+
+  $("to-step-2").addEventListener("click", function(){
+    state.niche = $("niche").value.trim();
+    state.audience = $("audience").value.trim();
+    state.talkabout = $("talkabout").value.trim();
+    state.sell = $("sell").value.trim();
+    state.problem = $("problem").value.trim();
+    state.result = $("result").value.trim();
+    if(!state.niche || !state.audience || !state.talkabout || !state.problem || !state.result){
+      alert("Fill in everything except 'what you sell' to continue.");
+      return;
+    }
+    goToStep(2);
+  });
+  $("back-to-1").addEventListener("click", function(){ goToStep(1); });
+
+  $("to-step-3").addEventListener("click", function(){
+    state.customFramework = $("custom-framework").value.trim();
+    state.customExamples = $("custom-examples").value.trim();
+    state.customAvoid = $("custom-avoid").value.trim();
+    if(state.voice === "custom" && !state.customExamples){
+      alert("Paste at least 2-3 real posts so ContentStack can match your style.");
+      return;
+    }
+    goToStep(3);
+  });
+  $("back-to-2").addEventListener("click", function(){ goToStep(2); });
+
+  $("to-step-4").addEventListener("click", function(){
+    var pillars = defaultPillars.map(function(p){ return p.trim(); }).filter(Boolean);
+    if(pillars.length < 3){ alert("Add at least 3 topics to continue."); return; }
+    state.pillars = pillars;
+    goToStep(4);
+  });
+  $("back-to-3").addEventListener("click", function(){ goToStep(3); });
+
+  // ---- Generation (Claude-powered, built around the PostSplice-style method) ----
+  var voiceDescriptions = {
+    feminine: "Feminine and punchy: short lines, deliberate sentence fragments, occasional ALL CAPS for emphasis, direct, confident, human, occasional emoji like 🤍🥺😭 used sparingly.",
+    bold: "Bold and direct: punchy, imperative, no fluff, no emojis.",
+    warm: "Warm and relatable: friendly, casual, encouraging, like talking to a friend. Light emoji use is okay.",
+    faith: "Faith-rooted: affirming and purpose-driven, without being preachy.",
+    humor: "Humor-forward: witty, self-aware, relatable, a little sarcastic."
+  };
+
+  function buildCounts(){
+    var n = state.pillars.length;
+    var base = Math.floor(30/n);
+    var remainder = 30 - base*n;
+    return state.pillars.map(function(_, i){ return base + (i < remainder ? 1 : 0); });
+  }
+
+  async function generateIdeas(){
+    var counts = buildCounts();
+    var pillarSpec = state.pillars.map(function(p, i){ return "- \"" + p + "\": exactly " + counts[i] + " posts"; }).join("\n");
+    var jobsAllowed = state.stage === "growing"
+      ? "Reach, Connection, Authority, Proof, Desire (no Conversion — this creator isn't selling right now)"
+      : "Reach, Connection, Authority, Proof, Desire, Conversion";
+
+    var voiceInstruction;
+    if(state.voice === "custom"){
+      voiceInstruction = "Match this creator's real voice exactly — same tone, sentence rhythm, and structure as these actual posts of theirs:\n---\n" +
+        state.customExamples + "\n---\n" +
+        "Study the line breaks, punctuation, capitalization, and sentence length in those examples and write every post the same way.";
+    } else {
+      voiceInstruction = "Match this voice consistently: " + voiceDescriptions[state.voice];
+    }
+
+    var frameworkOverride = state.customFramework
+      ? "\n\nThis creator also has their own method they want you to build every post around — follow it as the primary process, on top of the job/hook/splice rules above:\n" + state.customFramework
+      : "";
+
+    var extraAvoid = state.customAvoid
+      ? " Also never use these words or vibes this creator specifically hates: " + state.customAvoid + "."
+      : "";
+
+    var systemPrompt = "You write Threads posts using the ContentStack method:\n" +
+      "1. Every post has exactly ONE primary job: Reach (short, shareable, reaches new people), Connection (conversation, community, opinions), " +
+      "Authority (a lesson, mistake, framework, useful insight), Proof (a real result or milestone), Desire (the outcome/transformation the audience wants), " +
+      "or Conversion (connects a real problem/desire to the creator's offer naturally, without sounding like an ad).\n" +
+      "2. Splice the creator's real niche, audience, offer, and voice into each post — never just insert their niche into a generic template. The same idea should read completely differently for a fitness creator versus a business coach.\n" +
+      "3. Match length to the idea. Some posts are 5-15 words. Some are 2-5 short lines with real line breaks. Some are a longer story or list. Never pad a one-liner into a paragraph.\n" +
+      "4. Only use proof (numbers, results, timeframes) that the creator actually supplied. Never invent income, followers, testimonials, or personal experiences. If a Proof-job post is needed but no proof was given, either avoid the Proof job or write a bracketed placeholder like [drop your real number here].\n" +
+      "5. Conversion posts lead with the problem, story, or desired outcome — the offer is the natural next step, never an announcement. Conversion should be a minority of the batch (roughly 10-20%), surrounded by non-promotional posts.\n" +
+      "6. Across the full batch, deliberately vary job type, hook style, length, and angle. Do not repeat the same job, hook structure, or sentence pattern back to back. Allowed jobs for this batch: " + jobsAllowed + ".\n" +
+      "7. Hook styles you can pull from when they genuinely fit (never force one): a direct audience call-out, REAL TALK, UNPOPULAR OPINION, HARD TRUTH, NOBODY TALKS ABOUT, FROM EXPERIENCE, BE HONEST, REPEAT AFTER ME, NORMALIZE, a specific number, before vs after, a strong belief, curiosity, or a tiny standalone statement. Plenty of posts should use no label at all.\n" +
+      "8. Before finalizing each post, silently check: would a real person actually open Threads and type this? Strip robotic transitions, filler, generic motivational language, forced rhetorical questions, and AI-sounding phrases. Never explain a punchline after it lands.\n" +
+      "9. Never use: unlock, elevate, unleash, seamless, supercharge, revolutionize, game-changing, powerful solution, maximize your potential, take your content to the next level, crafted to, designed to empower, content that resonates, authentic engagement, leverage your audience, optimize your journey, transform your social presence, 'here's the truth', or repetitive 'You don't need X. You need Y.' structures. No hashtags. No forced CTAs." + extraAvoid + "\n" +
+      "10. " + voiceInstruction + frameworkOverride + "\n\n" +
+      "Return ONLY raw JSON — no markdown fences, no preamble. Format: {\"ideas\":[{\"pillar\":\"<exact pillar name>\",\"job\":\"<one of: Reach, Connection, Authority, Proof, Desire, Conversion>\",\"post\":\"<the full post text, with real \\n line breaks where the post has multiple lines>\"}]}. " +
+      "The array must contain exactly 30 items, matching the exact per-pillar counts given.";
+
+    var userPrompt = "Niche: " + state.niche + "\n" +
+      "Audience: " + state.audience + "\n" +
+      "What they talk about: " + state.talkabout + "\n" +
+      "What they sell: " + (state.sell || "nothing yet") + "\n" +
+      "Audience's problem: " + state.problem + "\n" +
+      "Result audience wants: " + state.result + "\n" +
+      "Stage: " + state.stage + "\n" +
+      "Real proof supplied: " + (state.proof || "none supplied") + "\n" +
+      "What's already worked for them: " + (state.worked || "nothing supplied") + "\n\n" +
+      "Topics and exact counts:\n" + pillarSpec + "\n\n" +
+      "Respond with only the JSON object.";
+
+    var response = await fetch("/.netlify/functions/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 3000,
+        system: systemPrompt,
+        messages: [{ role: "user", content: userPrompt }]
+      })
+    });
+    if(!response.ok){
+      var errBody = "";
+      try { errBody = await response.text(); } catch(e){}
+      throw new Error("Request failed (" + response.status + "). " + errBody);
+    }
+    var data = await response.json();
+    var rawText = (data.content || []).map(function(b){ return b.type === "text" ? b.text : ""; }).join("");
+    var cleaned = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
+    var parsed = JSON.parse(cleaned);
+    if(!parsed.ideas || !Array.isArray(parsed.ideas)){ throw new Error("Unexpected response format"); }
+
+    var grouped = {};
+    state.pillars.forEach(function(p){ grouped[p] = []; });
+    parsed.ideas.forEach(function(item){
+      var key = state.pillars.find(function(p){ return p.trim().toLowerCase() === (item.pillar||"").trim().toLowerCase(); }) || state.pillars[0];
+      grouped[key].push({ post: item.post, job: item.job || "Reach" });
+    });
+    return grouped;
+  }
+
+  $("generate-btn").addEventListener("click", async function(){
+    state.proof = $("proof").value.trim();
+    state.worked = $("worked").value.trim();
+    var btn = $("generate-btn");
+    var originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Generating...";
+    try{
+      var results = await generateIdeas();
+      renderResults(results);
+      $("wizard").style.display = "none";
+      $("result-step").style.display = "block";
+    } catch(err){
+      alert("Something went wrong generating your ideas. Please try again.\n\n" + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
+  });
+
+  var jobColors = { Reach:"var(--sage)", Connection:"var(--ochre)", Authority:"var(--slate)", Proof:"var(--teal)", Desire:"var(--mauve)", Conversion:"var(--rust)" };
+
+  function renderResults(results){
+    $("result-sub").textContent = "For " + state.audience + " — grouped across " + state.pillars.length + " topics.";
+    var body = $("results-body");
+    body.innerHTML = "";
+    var counter = 1;
+    var allTextParts = [];
+
+    state.pillars.forEach(function(pillar){
+      var block = document.createElement("div");
+      block.className = "pillar-block";
+      var title = document.createElement("div");
+      title.className = "pillar-title";
+      title.textContent = pillar;
+      block.appendChild(title);
+      allTextParts.push("\n" + pillar.toUpperCase() + "\n");
+
+      (results[pillar] || []).forEach(function(item){
+        var card = document.createElement("div");
+        card.className = "idea-card";
+
+        var top = document.createElement("div");
+        top.className = "idea-top";
+        var num = document.createElement("div");
+        num.className = "idea-num";
+        num.textContent = "#" + counter;
+        var tag = document.createElement("div");
+        tag.className = "job-tag";
+        tag.textContent = item.job;
+        tag.style.background = jobColors[item.job] || "var(--ink-soft)";
+        top.appendChild(num);
+        top.appendChild(tag);
+
+        var text = document.createElement("div");
+        text.className = "idea-text";
+        text.textContent = item.post;
+
+        var copyBtn = document.createElement("button");
+        copyBtn.className = "copy-one";
+        copyBtn.textContent = "Copy";
+        (function(ideaText, btn){
+          btn.addEventListener("click", function(){
+            copyToClipboard(ideaText);
+            btn.textContent = "Copied";
+            btn.classList.add("copied");
+            setTimeout(function(){ btn.textContent = "Copy"; btn.classList.remove("copied"); }, 1400);
+          });
+        })(item.post, copyBtn);
+
+        card.appendChild(top);
+        card.appendChild(text);
+        card.appendChild(copyBtn);
+        block.appendChild(card);
+
+        allTextParts.push("#" + counter + " [" + item.job + "]\n" + item.post);
+        counter++;
+      });
+      body.appendChild(block);
+    });
+    window.__contentstack_all = allTextParts.join("\n\n");
+  }
+
+  function copyToClipboard(text){
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text);
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+  }
+
+  $("copy-all-btn").addEventListener("click", function(){
+    copyToClipboard(window.__contentstack_all || "");
+    $("copy-all-btn").textContent = "Copied all!";
+    setTimeout(function(){ $("copy-all-btn").textContent = "Copy all"; }, 1600);
+  });
+
+  $("reset-btn").addEventListener("click", function(){
+    state = { niche:"", audience:"", talkabout:"", sell:"", problem:"", result:"",
+      voice:"feminine", customFramework:"", customExamples:"", customAvoid:"", stage:"growing", pillars:[], proof:"", worked:"" };
+    ["niche","audience","talkabout","sell","problem","result","custom-framework","custom-examples","custom-avoid","proof","worked"].forEach(function(id){ $(id).value = ""; });
+    defaultPillars = ["", "", ""];
+    renderPillars();
+    document.querySelectorAll("#voice-grid .choice-opt").forEach(function(o){ o.classList.remove("selected"); });
+    document.querySelector('#voice-grid .choice-opt[data-voice="feminine"]').classList.add("selected");
+    $("custom-voice-wrap").style.display = "none";
+    document.querySelectorAll("#stage-grid .choice-opt").forEach(function(o){ o.classList.remove("selected"); });
+    document.querySelector('#stage-grid .choice-opt[data-stage="growing"]').classList.add("selected");
+    $("result-step").style.display = "none";
+    $("wizard").style.display = "block";
+    goToStep(1);
+  });
+
+})();
+</script>
+</body>
+</html>
