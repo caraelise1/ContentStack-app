@@ -121,12 +121,11 @@
         <div class="step active" id="step-1">
           <div class="stepnum">Step 1 of 4</div>
           <h1>Who's actually behind this account?</h1>
-<p class="sub">Every idea gets built around this — not dropped into a generic template. Every box is required except "what you sell."</p>
+          <p class="sub">Every idea gets built around this — not dropped into a generic template. Every box is required except "what you sell."</p>
 
-<label for="niche">Your niche</label>
-<input type="text" id="niche" placeholder="e.g. Threads growth for beginner creators">
-<p class="hint" style="margin-top:6px;">Examples: budgeting for moms, healthy meal prep, Pinterest for small shops, faceless content creation</p>
-
+          <label for="niche">Your niche</label>
+          <input type="text" id="niche" placeholder="e.g. Threads growth for beginner creators">
+          <p class="hint" style="margin-top:6px;">Examples: budgeting for moms, healthy meal prep, Pinterest for small shops, faceless content creation</p>
 
           <label for="audience">Who you want to reach</label>
           <input type="text" id="audience" placeholder="e.g. moms who've never made a dollar online">
@@ -334,7 +333,6 @@
     bold: "Bold and direct: punchy, imperative, no fluff, no emojis.",
     warm: "Warm and relatable: friendly, casual, encouraging, like talking to a friend. Light emoji use is okay.",
     faith: "Faith-rooted: affirming and purpose-driven, without being preachy. Never claim to know God's specific intentions for the reader. Never present wealth, business success, income or ease as evidence of God's favor or confirmation of His calling. Never promise God will provide a particular business outcome. Keep faith content encouraging and grounded without theological claims the creator hasn't actually made themselves.",
-
     humor: "Humor-forward: witty, self-aware, relatable, a little sarcastic."
   };
 
@@ -361,29 +359,77 @@
       voiceInstruction = "Match this voice consistently: " + voiceDescriptions[state.voice];
     }
 
+    var structureLibrary =
+      "TINY DECLARATION — one short punchy thought, 1-2 lines, no explanation after.\n" +
+      "IDENTITY — 'She's [trait]. She's [trait]. She's [desired identity]. She's you.' or 'The [specific person] reading this is about to [aspirational, non-guaranteed action].'\n" +
+      "NORMALIZE — 'Normalize [specific belief/behaviour/decision].' Usually one sentence; only add a second if it genuinely improves it.\n" +
+      "HOT TAKE — 'HOT TAKE: [contrarian belief]' then a short reframe/contrast, optional mic-drop line.\n" +
+      "REAL TALK — 'REAL TALK: [truth/problem]' then a reframe, then a short conclusion.\n" +
+      "NOBODY TALKS ABOUT — 'NOBODY TALKS ABOUT [overlooked truth].' then why it matters, then a short conclusion.\n" +
+      "POV — 'POV: [specific relatable/desirable scenario]' — visual and specific, usually 1-3 lines.\n" +
+      "DEAR ALGO — 'Dear algo, find me [very specific audience identity + desire/problem].' plus a short community line, usually 3-6 short lines.\n" +
+      "IF YOU ARE — 'If you're [specific audience identity/behaviour/desire], [recognition or community statement].'\n" +
+      "WHERE ARE — 'Where are the [specific people] who [specific belief/desire/action]?' — community/follower-magnet.\n" +
+      "REPEAT AFTER ME — 'REPEAT AFTER ME:' then a short belief/declaration.\n" +
+      "BREAKING — 'BREAKING:' then a specific news/result/development, then short meaning/context. Use only when the content genuinely supports this energy.\n" +
+      "BE HONEST — 'BE HONEST: [specific, interesting question]'. Never automatically add 'tell me in the replies.'\n" +
+      "BEFORE → AFTER — 'I used to [specific old behaviour]. Then [specific change]. Now [real result].' Only with a genuine experience the creator supplied.\n" +
+      "RESULT FIRST — '[real result] in [real timeframe]. [what wasn't required] [what actually contributed].' Only with real supplied proof.\n" +
+      "TIMELINE PROOF — 'In [timeframe]: [result] [result] [result] [short interpretation].' Only with real supplied proof.\n" +
+      "LIFESTYLE PROOF — 'I was [real activity] when [real result] happened. [what this demonstrates].' Only with a genuine supplied experience.\n" +
+      "SCREENSHOT/RECEIPT PROOF — 'This is what [real timeframe/action] looks like. [optional short context].' Only with supplied proof.\n" +
+      "PROBLEM → REFRAME — 'You think [surface problem]. But [actual problem/reframe]. [short takeaway].'\n" +
+      "OBSERVATION — 'Something I've noticed about [topic]: [specific observation]. [short implication].'\n" +
+      "LIST/BREAKDOWN — hook, then a numbered list, then a short conclusion. For teaching/authority posts where detail genuinely helps. Use selectively — not every post.";
+
+    var structureMapping =
+      "Reach favours: Tiny Declaration, Identity, Normalize, Hot Take, Nobody Talks About, POV, Repeat After Me, short observations, relatable/bold statements.\n" +
+      "Connection favours: Dear Algo, If You Are, Where Are, Be Honest, community identity, relatable questions, shared-experience posts.\n" +
+      "Authority favours: Real Talk, Hot Take, Nobody Talks About, Problem → Reframe, Observation, teaching/breakdown, lessons from genuine experience.\n" +
+      "Proof favours: Result First, Timeline Proof, Lifestyle Proof, Before → After, Screenshot/Receipt Proof, genuine case-study structures.\n" +
+      "Desire favours: POV, Identity, future scenario, possibility, transformation, relatable lifestyle outcome.\n" +
+      "Conversion favours: Problem → Solution, Proof → Product, Story → Product, Desire → Product, objection → reframe → product, direct but natural recommendation, short product mention.";
+
+    var lengthRules =
+      "Tiny Declaration: 1-2 lines max. Normalize: usually 1 sentence. Identity: 1-4 short lines. POV: usually 1-3 lines. " +
+      "Dear Algo: usually 3-6 short lines. Connection questions: often 1-3 lines. Hot Take/Real Talk: usually 2-6 short lines. " +
+      "Authority/Teaching: can be medium or longer when the idea needs explanation. Proof: can be medium or longer if context is genuinely needed. " +
+      "Conversion: length depends on the sales structure. If the punchline has landed, stop writing — do not explain a strong line until it gets weaker. Shorter is often stronger on Threads.";
+
     var frameworkOverride = state.customFramework
-      ? "\n\nThis creator also has their own method they want you to build every post around — follow it as the primary process, on top of the job/hook/splice rules above:\n" + state.customFramework
+      ? "\n\nThis creator also has their own method they want you to build every post around — follow it as the primary process, on top of everything above:\n" + state.customFramework
       : "";
 
     var extraAvoid = state.customAvoid
       ? " Also never use these words or vibes this creator specifically hates: " + state.customAvoid + "."
       : "";
 
-    var systemPrompt = "You write Threads posts using the ContentStack method:\n" +
-      "1. Every post has exactly ONE primary job: Reach (short, shareable, reaches new people), Connection (conversation, community, opinions), " +
-      "Authority (a lesson, mistake, framework, useful insight), Proof (a real result or milestone), Desire (the outcome/transformation the audience wants), " +
-      "or Conversion (connects a real problem/desire to the creator's offer naturally, without sounding like an ad).\n" +
-      "2. Splice the creator's real niche, audience, offer, and voice into each post — never just insert their niche into a generic template. The same idea should read completely differently for a fitness creator versus a business coach.\n" +
-      "3. Match length to the idea. Some posts are 5-15 words. Some are 2-5 short lines with real line breaks. Some are a longer story or list. Never pad a one-liner into a paragraph.\n" +
-      "4. TRUTH RULE — NON-NEGOTIABLE: Never invent or infer personal experiences, client experiences, testimonials, quotations, case studies, credentials, results, revenue, follower counts, timeframes, statistics, anecdotes, conversations, or specific observations. Only use proof explicitly supplied by the creator — you may reframe that proof, but never add details to it. If the creator supplies one result, that does not give permission to invent additional results. Never put words inside quotation marks unless the creator supplied those exact words. If a post structure would require information the creator hasn't provided, use a different structure instead — never insert placeholders into the final output.\n" +
- +
- +
-      "5. Conversion posts lead with the problem, story, or desired outcome — the offer is the natural next step, never an announcement. Conversion should be a minority of the batch (roughly 10-20%), surrounded by non-promotional posts.\n" +
-      "6. Across the full batch, deliberately vary job type, hook style, length, and angle. Do not repeat the same job, hook structure, or sentence pattern back to back. Allowed jobs for this batch: " + jobsAllowed + ".\n" +
-      "7. Hook styles you can pull from when they genuinely fit (never force one): a direct audience call-out, REAL TALK, UNPOPULAR OPINION, HARD TRUTH, NOBODY TALKS ABOUT, FROM EXPERIENCE, BE HONEST, REPEAT AFTER ME, NORMALIZE, a specific number, before vs after, a strong belief, curiosity, or a tiny standalone statement. Plenty of posts should use no label at all.\n" +
-      "8. Before finalizing each post, silently check: would a real person actually open Threads and type this? Strip robotic transitions, filler, generic motivational language, forced rhetorical questions, and AI-sounding phrases. Never explain a punchline after it lands.\n" +
-      "9. Never use: unlock, elevate, unleash, seamless, supercharge, revolutionize, game-changing, powerful solution, maximize your potential, take your content to the next level, crafted to, designed to empower, content that resonates, authentic engagement, leverage your audience, optimize your journey, transform your social presence, 'here's the truth', or repetitive 'You don't need X. You need Y.' structures. No hashtags. No forced CTAs." + extraAvoid + "\n" +
-      "10. " + voiceInstruction + frameworkOverride + "\n\n" +
+    var systemPrompt = "You write Threads posts using the ContentStack method. The category is the JOB of the post. The structure is HOW it's written. These are separate decisions — pick a job, then pick a structure that fits it, then write.\n\n" +
+
+      "JOBS — every post has exactly ONE primary job:\n" +
+      "Reach (short, shareable, reaches new people), Connection (conversation, community, opinions), Authority (a lesson, mistake, framework, useful insight), " +
+      "Proof (a real result or milestone), Desire (the outcome/transformation the audience wants), or Conversion (connects a real problem/desire to the creator's offer naturally, without sounding like an ad). Allowed jobs for this batch: " + jobsAllowed + ".\n\n" +
+
+      "STRUCTURE LIBRARY — abstract writing architectures, not finished templates. Shape an original post around the creator's real niche, audience, beliefs, offer and proof using one of these as skeleton; never reproduce them word-for-word and never let the same structure or opening pattern dominate the batch (max twice per 30 unless there's a strong reason):\n" + structureLibrary + "\n\n" +
+
+      "STRUCTURE-TO-JOB MAPPING (a guide, not a hard rule):\n" + structureMapping + "\n\n" +
+
+      "CONCEPT DIVERSITY — before writing, silently identify multiple genuinely distinct angles from the creator's profile (e.g. the blank-page problem, inconsistency, not knowing a post's purpose, views but no sales, wrong audience, building trust, creating demand, finding your voice, balancing growth and selling, turning expertise into content, selling without constantly promoting, posting without proof yet, fear of posting, audience positioning, sparking conversation, converting attention into customers — adapted to their actual niche). Spread the 30 posts across genuinely different concepts. Swapping the niche word while making the same point is NOT diversity — the underlying idea must differ, not just the topic label.\n\n" +
+
+      "LENGTH BY STRUCTURE: " + lengthRules + "\n\n" +
+
+      "HUMAN-SOUNDING RULES — this should read like someone opened Threads and typed a real thought, not polished marketing copy. Avoid: corporate language, motivational filler, excessive explanation, forced metaphors, fake profundity, three-part rhetorical lists as a default, generic 'content creator' language, LinkedIn-style mini essays, making every post educational, ending every post with a lesson, ending every Connection post with 'be honest in the replies,' unnecessary CTAs, unnecessary questions, and the words unlock, elevate, unleash, seamless, supercharge, revolutionize, game-changing, powerful solution, maximize your potential, take your content to the next level, crafted to, designed to empower, content that resonates, authentic engagement, leverage your audience, optimize your journey, transform your social presence, 'here's the truth,' or repetitive 'You don't need X. You need Y.'" + extraAvoid + " Do not repeat opener patterns like 'most people...', 'the reason...', 'imagine...', 'real question...', 'you're doing X because...', 'that's the difference...', 'that's the whole game...' more than is genuinely warranted. Some posts should be 5-10 words — don't be afraid of that.\n\n" +
+
+      "TRUTH RULE — NON-NEGOTIABLE: Never invent or infer personal experiences, client experiences, testimonials, quotations, case studies, credentials, results, revenue, follower counts, timeframes, statistics, anecdotes, conversations, or specific observations the creator did not supply. This includes Connection posts — never write 'I'll go first: someone asked me...', 'I once...', 'I got asked to...', 'I used to...' or similar unless the creator's profile actually gave you that experience. Only use proof explicitly supplied by the creator — you may reframe it, but never add detail to it, and one supplied result never gives permission to invent additional results. Never put words in quotation marks unless the creator supplied those exact words. If a structure would require information the creator hasn't provided, use a different structure instead — never insert a placeholder into the final output.\n\n" +
+
+      "SALES POSTS SHOULD NOT ALL SOUND LIKE ADS — Conversion means the post moves someone toward the offer, not that every Conversion post announces a system, framework, or says 'click here'/'if you're ready.' Rotate: some short, some lead with proof, some lead with a problem, some lead with a genuine story, some explain what the product does, some handle an objection, some build desire and mention the product only at the end, some sell directly. Conversion should be a minority of the batch (roughly 10-20%), surrounded by non-promotional posts, and the offer should feel like the natural next step, never bolted on.\n\n" +
+
+      "VOICE OVERRIDES EVERYTHING ELSE: " + voiceInstruction + " The structure is the skeleton — the creator's voice is what fills it; two posts using the same structure should still sound distinctly like this creator, not like a template.\n\n" +
+
+      "ORIGINALITY: these structures are abstract mechanics, not proprietary source material — never reproduce another creator's specific wording. Generate genuinely original content from this creator's own profile, ideas, and proof." + frameworkOverride + "\n\n" +
+
+      "FINAL INTERNAL CHECK — before returning the batch, silently verify: does every post match its assigned job; are multiple structures represented; are the concepts genuinely different; is any claim or personal story invented; could any post be shorter without losing meaning; are hooks/openers repeated; are too many posts questions, teaching, or selling; does the whole batch sound like one real person who sounds native to Threads rather than LinkedIn or AI marketing copy; was the creator's real proof used where it fit. Rewrite anything that fails before returning it.\n\n" +
+
       "Return ONLY raw JSON — no markdown fences, no preamble. Format: {\"ideas\":[{\"pillar\":\"<exact pillar name>\",\"job\":\"<one of: Reach, Connection, Authority, Proof, Desire, Conversion>\",\"post\":\"<the full post text, with real \\n line breaks where the post has multiple lines>\"}]}. " +
       "The array must contain exactly 30 items, matching the exact per-pillar counts given.";
 
@@ -404,8 +450,7 @@
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
-
-        max_tokens: 3000,
+        max_tokens: 3500,
         system: systemPrompt,
         messages: [{ role: "user", content: userPrompt }]
       })
