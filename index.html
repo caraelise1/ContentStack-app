@@ -89,6 +89,11 @@
   #copy-all-btn:hover{ background:var(--espresso-dark); }
   #reset-btn{ background:none; border:1.5px solid var(--line); color:var(--ink-soft); }
   #reset-btn:hover{ border-color:var(--espresso); color:var(--espresso); }
+  #daily-copy-all{ background:var(--espresso); color:#FFFDF8; border:none; }
+  #daily-copy-all:hover{ background:var(--espresso-dark); }
+  #daily-regen, #daily-change{ background:none; border:1.5px solid var(--line); color:var(--ink-soft); }
+  #daily-regen:hover, #daily-change:hover{ border-color:var(--espresso); color:var(--espresso); }
+  #daily-regen:disabled{ opacity:.6; cursor:not-allowed; }
   .pillar-block{ margin-bottom:22px; }
   .pillar-title{ display:inline-flex; align-items:center; gap:7px; background:var(--espresso); color:#FFFDF8; font-weight:700; font-size:0.86rem;
     padding:6px 12px; border-radius:99px; margin-bottom:10px; }
@@ -101,6 +106,32 @@
   .copy-one:hover{ color:var(--espresso); }
   .copy-one.copied{ color:var(--sage); }
   footer.bottom{ text-align:center; color:var(--ink-soft); font-size:0.8rem; margin-top:28px; padding-top:6px; }
+
+  .tabs{ display:flex; gap:6px; background:#E9DECB; padding:4px; border-radius:12px; margin-bottom:22px; }
+  .tab{ flex:1; background:none; border:none; font-family:'Inter',sans-serif; font-weight:600; font-size:0.9rem; color:var(--ink-soft);
+    padding:10px 8px; border-radius:9px; cursor:pointer; transition:.15s; }
+  .tab.active{ background:var(--card); color:var(--espresso); box-shadow:0 1px 4px rgba(74,51,35,0.18); }
+  #daily-view{ display:none; }
+  #daily-result{ display:none; }
+  .dh{ font-size:1.28rem; margin:0 0 6px; line-height:1.25; color:var(--espresso); }
+  .stepper{ display:flex; align-items:center; gap:14px; margin-top:4px; }
+  .stepper button{ width:44px; height:44px; border-radius:12px; border:1.5px solid var(--line); background:#fff; color:var(--espresso);
+    font-size:1.4rem; font-weight:600; cursor:pointer; line-height:1; }
+  .stepper button:hover{ border-color:var(--espresso); }
+  #count-val{ font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:1.8rem; color:var(--espresso); min-width:44px; text-align:center; }
+  #product-list{ margin-top:4px; }
+  #product-list .choice-opt{ margin-bottom:8px; }
+  .prod-actions{ margin-top:7px; display:flex; gap:14px; }
+  .link-btn{ background:none; border:none; padding:0; font-size:0.76rem; font-weight:600; color:var(--ink-soft); cursor:pointer; text-decoration:underline; }
+  .link-btn:hover{ color:var(--espresso); }
+  #product-form{ display:none; margin-top:8px; padding:16px; border:1.5px solid var(--line); border-radius:12px; background:#FBF6EC; }
+  #product-form label:first-child{ margin-top:0; }
+  .pf-error{ color:var(--rust); font-size:0.8rem; margin-top:10px; min-height:1em; }
+  .pf-actions{ display:flex; gap:10px; margin-top:14px; }
+  .pf-actions button{ padding:11px 14px; font-size:0.92rem; }
+  .link-box{ background:var(--card); border:1.5px dashed var(--line); border-radius:12px; padding:13px 15px; margin-bottom:16px; display:none; }
+  .link-box .lb-title{ font-size:0.76rem; font-weight:700; color:var(--ink); margin-bottom:5px; }
+  .link-box .lb-link{ font-size:0.85rem; color:var(--ink-soft); word-break:break-all; }
   @media (max-width:400px){ .choice-grid{ grid-template-columns:1fr; } .choice-grid.thirds{ grid-template-columns:1fr; } }
 </style>
 </head>
@@ -111,6 +142,11 @@
     <h1 class="brand-title">Content Stack</h1>
     <p class="brand-sub">30 Threads post ideas, built around your voice and topics.</p>
   </header>
+
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-tab="ideas">30 post ideas</button>
+    <button class="tab" data-tab="daily">Today's posts</button>
+  </div>
 
   <div id="wizard">
     <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
@@ -231,6 +267,69 @@
     <div id="results-body"></div>
   </div>
 
+  <div id="daily-view">
+    <div id="daily-form">
+      <div class="card">
+        <h1 class="dh">Today's posts</h1>
+        <p class="sub" id="daily-who"></p>
+
+        <label style="margin-top:0">How many posts today?</label>
+        <div class="stepper">
+          <button id="count-minus" aria-label="Fewer posts">&minus;</button>
+          <div id="count-val">5</div>
+          <button id="count-plus" aria-label="More posts">+</button>
+        </div>
+        <p class="hint" style="margin-top:8px;">1 to 15. You get a mix of post types that suits the day, in the order to post them.</p>
+
+        <label>What are you promoting today?</label>
+        <div id="product-list"></div>
+        <button class="add-pillar" id="add-product-btn">+ Add a product</button>
+
+        <div id="product-form">
+          <label for="pf-name">Product name</label>
+          <input type="text" id="pf-name" placeholder="e.g. The Space Between">
+          <label for="pf-desc">What it is and what it actually does</label>
+          <textarea id="pf-desc" placeholder="Be specific. The posts only know what you write here. e.g. A $17 guide with 30 journal prompts for women who feel stuck between seasons"></textarea>
+          <label for="pf-price">Price <span class="optional">(optional)</span></label>
+          <input type="text" id="pf-price" placeholder="e.g. $17">
+          <label for="pf-link">Your link <span class="optional">(optional, goes in your pinned reply, never in the post)</span></label>
+          <input type="text" id="pf-link" placeholder="https://...">
+          <label for="pf-exp">Your own real experience with it <span class="optional">(optional)</span></label>
+          <textarea id="pf-exp" placeholder="Only if it's true. Leave blank and the posts won't claim you've used it."></textarea>
+          <div class="pf-error" id="pf-error"></div>
+          <div class="pf-actions">
+            <button class="ghost" id="pf-cancel">Cancel</button>
+            <button class="primary" id="pf-save">Save product</button>
+          </div>
+        </div>
+
+        <div class="nav-row">
+          <button class="ghost" id="edit-profile-btn">Edit profile</button>
+          <button class="primary" id="daily-generate-btn">Write today's posts</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="daily-result">
+      <div class="result-head">
+        <h1>Today's posts</h1>
+        <p id="daily-sub"></p>
+      </div>
+      <div class="result-actions">
+        <button id="daily-copy-all">Copy all</button>
+        <button id="daily-regen">Regenerate</button>
+        <button id="daily-change">Change</button>
+      </div>
+      <div class="link-box" id="daily-link-box">
+        <div class="lb-title">Your link for the pinned reply</div>
+        <div class="lb-link" id="daily-link-text"></div>
+        <button class="copy-one" id="daily-link-copy">Copy link</button>
+      </div>
+      <div id="daily-body"></div>
+      <p class="hint" id="daily-disclosure" style="display:none;">Promoting with an affiliate link? UK advertising rules expect that to be clearly labelled (for example #ad) in the post or the reply.</p>
+    </div>
+  </div>
+
   <footer class="bottom">by itscaraelise</footer>
 </div>
 
@@ -241,6 +340,11 @@
 
   var defaultPillars = ["", "", ""];
   function $(id){ return document.getElementById(id); }
+
+  function lsGet(k){ try{ var v = localStorage.getItem(k); return v ? JSON.parse(v) : null; }catch(e){ return null; } }
+  function lsSet(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+  function lsDel(k){ try{ localStorage.removeItem(k); }catch(e){} }
+  var tab = "ideas", dailyMode = false, ideasHasResults = false, dailyScreen = "form";
 
   function renderPillars(){
     var list = $("pillar-list");
@@ -286,10 +390,23 @@
     });
   });
 
+  function setStepLabels(){
+    var labels = dailyMode
+      ? { 1:"Step 1 of 3", 2:"Step 2 of 3", 4:"Step 3 of 3" }
+      : { 1:"Step 1 of 4", 2:"Step 2 of 4", 3:"Step 3 of 4", 4:"Step 4 of 4" };
+    [1,2,3,4].forEach(function(i){
+      var el = document.querySelector("#step-" + i + " .stepnum");
+      if(el && labels[i]) el.textContent = labels[i];
+    });
+    var gb = $("generate-btn");
+    if(!gb.disabled){ gb.textContent = dailyMode ? "Save and continue" : "Generate 30 ideas"; }
+  }
   function goToStep(n){
     document.querySelectorAll(".step").forEach(function(s){ s.classList.remove("active"); });
     $("step-" + n).classList.add("active");
-    $("progress-fill").style.width = (n/4*100) + "%";
+    var pct = dailyMode ? ({ 1:1/3, 2:2/3, 4:1 }[n] || 1) * 100 : n/4*100;
+    $("progress-fill").style.width = pct + "%";
+    setStepLabels();
   }
 
   $("to-step-2").addEventListener("click", function(){
@@ -303,6 +420,7 @@
       alert("Fill in everything except 'what you sell' to continue.");
       return;
     }
+    saveProfile();
     goToStep(2);
   });
   $("back-to-1").addEventListener("click", function(){ goToStep(1); });
@@ -315,6 +433,8 @@
       alert("Paste at least 2-3 real posts so ContentStack can match your style.");
       return;
     }
+    saveProfile();
+    if(dailyMode){ goToStep(4); return; }
     goToStep(3);
   });
   $("back-to-2").addEventListener("click", function(){ goToStep(2); });
@@ -323,9 +443,10 @@
     var pillars = defaultPillars.map(function(p){ return p.trim(); }).filter(Boolean);
     if(pillars.length < 3){ alert("Add at least 3 topics to continue."); return; }
     state.pillars = pillars;
+    saveProfile();
     goToStep(4);
   });
-  $("back-to-3").addEventListener("click", function(){ goToStep(3); });
+  $("back-to-3").addEventListener("click", function(){ goToStep(dailyMode ? 2 : 3); });
 
   // ---- Generation (Claude-powered, built around the PostSplice-style method) ----
   var voiceDescriptions = {
@@ -342,6 +463,79 @@
     var remainder = 30 - base*n;
     return state.pillars.map(function(_, i){ return base + (i < remainder ? 1 : 0); });
   }
+
+  // ---- Shared prompt blocks (used by both generators) ----
+  function voiceParts(){
+    var voiceInstruction;
+    if(state.voice === "custom"){
+      voiceInstruction = "Match this creator's real voice exactly — same tone, sentence rhythm, and structure as these actual posts of theirs:\n---\n" +
+        state.customExamples + "\n---\n" +
+        "Study the line breaks, punctuation, capitalization, and sentence length in those examples and write every post the same way.";
+    } else {
+      voiceInstruction = "Match this voice consistently: " + voiceDescriptions[state.voice];
+    }
+
+    var frameworkOverride = state.customFramework
+      ? "\n\nThis creator also has their own method they want you to build every post around — follow it as the primary process, on top of everything above:\n" + state.customFramework
+      : "";
+
+    var extraAvoid = state.customAvoid
+      ? " Also never use these words or vibes this creator specifically hates: " + state.customAvoid + "."
+      : "";
+
+    return { voiceInstruction: voiceInstruction, frameworkOverride: frameworkOverride, extraAvoid: extraAvoid };
+  }
+
+  var structureLibrary =
+    "TINY DECLARATION — one short punchy thought, 1-2 lines, no explanation after.\n" +
+    "IDENTITY — 'She's [trait]. She's [trait]. She's [desired identity]. She's you.' or 'The [specific person] reading this is about to [aspirational, non-guaranteed action].'\n" +
+    "NORMALIZE — 'Normalize [specific belief/behaviour/decision].' Usually one sentence; only add a second if it genuinely improves it.\n" +
+    "HOT TAKE — 'HOT TAKE: [contrarian belief]' then a short reframe/contrast, optional mic-drop line.\n" +
+    "REAL TALK — 'REAL TALK: [truth/problem]' then a reframe, then a short conclusion.\n" +
+    "NOBODY TALKS ABOUT — 'NOBODY TALKS ABOUT [overlooked truth].' then why it matters, then a short conclusion.\n" +
+    "POV — 'POV: [specific relatable/desirable scenario]' — visual and specific, usually 1-3 lines.\n" +
+    "DEAR ALGO — 'Dear algo, find me [very specific audience identity + desire/problem].' plus a short community line, usually 3-6 short lines.\n" +
+    "IF YOU ARE — 'If you're [specific audience identity/behaviour/desire], [recognition or community statement].'\n" +
+    "WHERE ARE — 'Where are the [specific people] who [specific belief/desire/action]?' — community/follower-magnet.\n" +
+    "REPEAT AFTER ME — 'REPEAT AFTER ME:' then a short belief/declaration.\n" +
+    "BREAKING — 'BREAKING:' then a specific news/result/development, then short meaning/context. Use only when the content genuinely supports this energy.\n" +
+    "BE HONEST — 'BE HONEST: [specific, interesting question]'. Never automatically add 'tell me in the replies.'\n" +
+    "BEFORE → AFTER — 'I used to [specific old behaviour]. Then [specific change]. Now [real result].' Only with a genuine experience the creator supplied.\n" +
+    "RESULT FIRST — '[real result] in [real timeframe]. [what wasn't required] [what actually contributed].' Only with real supplied proof.\n" +
+    "TIMELINE PROOF — 'In [timeframe]: [result] [result] [result] [short interpretation].' Only with real supplied proof.\n" +
+    "LIFESTYLE PROOF — 'I was [real activity] when [real result] happened. [what this demonstrates].' Only with a genuine supplied experience.\n" +
+    "SCREENSHOT/RECEIPT PROOF — 'This is what [real timeframe/action] looks like. [optional short context].' Only with supplied proof.\n" +
+    "PROBLEM → REFRAME — 'You think [surface problem]. But [actual problem/reframe]. [short takeaway].'\n" +
+    "OBSERVATION — 'Something I've noticed about [topic]: [specific observation]. [short implication].'\n" +
+    "LIST/BREAKDOWN — hook, then a numbered list, then a short conclusion. For teaching/authority posts where detail genuinely helps. Use selectively — not every post.";
+
+  var structureMapping =
+    "Reach favours: Tiny Declaration, Identity, Normalize, Hot Take, Nobody Talks About, POV, Repeat After Me, short observations, relatable/bold statements.\n" +
+    "Connection favours: Dear Algo, If You Are, Where Are, Be Honest, community identity, relatable questions, shared-experience posts.\n" +
+    "Authority favours: Real Talk, Hot Take, Nobody Talks About, Problem → Reframe, Observation, teaching/breakdown, lessons from genuine experience.\n" +
+    "Proof favours: Result First, Timeline Proof, Lifestyle Proof, Before → After, Screenshot/Receipt Proof, genuine case-study structures.\n" +
+    "Desire favours: POV, Identity, future scenario, possibility, transformation, relatable lifestyle outcome.\n" +
+    "Conversion favours: Problem → Solution, Proof → Product, Story → Product, Desire → Product, objection → reframe → product, direct but natural recommendation, short product mention.";
+
+  var lengthRules =
+    "Tiny Declaration: 1-2 lines max. Normalize: usually 1 sentence. Identity: 1-4 short lines. POV: usually 1-3 lines. " +
+    "Dear Algo: usually 3-6 short lines. Connection questions: often 1-3 lines. Hot Take/Real Talk: usually 2-6 short lines. " +
+    "Authority/Teaching: can be medium or longer when the idea needs explanation. Proof: can be medium or longer if context is genuinely needed. " +
+    "Conversion: length depends on the sales structure. If the punchline has landed, stop writing — do not explain a strong line until it gets weaker. Shorter is often stronger on Threads.";
+
+
+
+  var RULE_HIDDEN = "HIDDEN LABELS — never let an internal structure name leak into a post as a literal prefix, e.g. never write 'PROBLEM → REFRAME:', 'OBSERVATION:', 'WHERE ARE:', 'IF YOU ARE:', 'IDENTITY:', 'TINY DECLARATION:'. Natural hook words that a real person would actually type are fine as prefixes — REAL TALK:, HOT TAKE:, NOBODY TALKS ABOUT:, BE HONEST:, POV:, BREAKING:, NORMALIZE, REPEAT AFTER ME: — but 'Where are the affiliate marketers who...' is correct where 'WHERE ARE: The affiliate marketers who...' is not. The reader should never see evidence of the internal generation architecture.\n\n";
+
+  var RULE_IDENTITY = "IDENTITY POSTS — should create recognition ('that's me') or aspiration ('that's who I'm becoming'), built from ambition, values, behaviour, beliefs, goals, personality, shared experience, or desired future identity. Avoid making the reader's primary identity their failure or dysfunction (e.g. never 'She's confused. She's frustrated. She's you.').\n\n";
+
+  function ruleHuman(extraAvoid){ return "HUMAN-SOUNDING RULES — this should read like someone opened Threads and typed a real thought, not polished marketing copy. Avoid: corporate language, motivational filler, excessive explanation, forced metaphors, fake profundity, three-part rhetorical lists as a default, generic 'content creator' language, LinkedIn-style mini essays, making every post educational, ending every post with a lesson, ending every Connection post with 'be honest in the replies,' unnecessary CTAs, unnecessary questions, and the words unlock, elevate, unleash, seamless, supercharge, revolutionize, game-changing, powerful solution, maximize your potential, take your content to the next level, crafted to, designed to empower, content that resonates, authentic engagement, leverage your audience, optimize your journey, transform your social presence, 'here's the truth,' or repetitive 'You don't need X. You need Y.'" + extraAvoid + " Do not repeat opener patterns like 'most people...', 'the reason...', 'imagine...', 'real question...', 'you're doing X because...', 'that's the difference...', 'that's the whole game...' more than is genuinely warranted. Some posts should be 5-10 words — don't be afraid of that.\n\n"; }
+
+  var RULE_TRUTH = "TRUTH RULE — NON-NEGOTIABLE: Never invent or infer personal experiences, client experiences, testimonials, quotations, case studies, credentials, results, revenue, follower counts, timeframes, statistics, anecdotes, conversations, or specific observations the creator did not supply. This includes Connection posts — never write 'I'll go first: someone asked me...', 'I once...', 'I got asked to...', 'I used to...' or similar unless the creator's profile actually gave you that experience. Only use proof explicitly supplied by the creator — you may reframe it, but never add detail to it, and one supplied result never gives permission to invent additional results. Never put words in quotation marks unless the creator supplied those exact words. If a structure would require information the creator hasn't provided, use a different structure instead — never insert a placeholder into the final output.\n\n";
+
+  var RULE_FABRICATE = "NEVER FABRICATE STRATEGY FACTS — no invented percentages, statistics, exact quantities, posting frequencies, algorithm behavior, platform facts, conversion claims, guaranteed strategies, 'this always works', 'this prints money', arbitrary timelines, or arbitrary income outcomes, unless the creator's profile explicitly supplied that information. If something is the creator's opinion or belief rather than a verified fact, write it as a perspective ('I think...', 'in my experience posting X felt like...' only if they said so) rather than stating it as an objective platform rule.\n\n";
+
+  var RULE_HYPO = "NO INVENTED HYPOTHETICAL NUMBERS — this applies to Desire/POV posts too. Never write suspiciously specific invented results like 'POV: you wake up to 47 sales' or 'three people buy within the hour' unless those numbers come from real proof the creator supplied. A realistic, non-specific possibility is fine — 'POV: you wake up to another sale from something you posted yesterday' — because it doesn't manufacture invented specificity.\n\n";
 
   async function generateIdeas(){
     var counts = buildCounts();
@@ -361,59 +555,8 @@
       modeStrategy = "BOTH MODE — build a deliberate ecosystem of growth and selling, not just half-and-half output from each mode separately. The batch should naturally move people through DISCOVER → RELATE → TRUST → WANT → BUY: some posts attract (Reach/Connection), some connect, some establish expertise (Authority), some create desire (Desire), some demonstrate proof (Proof), and some sell (Conversion) — deliberately distributed across that whole arc rather than clustered.";
     }
 
-    var voiceInstruction;
-    if(state.voice === "custom"){
-      voiceInstruction = "Match this creator's real voice exactly — same tone, sentence rhythm, and structure as these actual posts of theirs:\n---\n" +
-        state.customExamples + "\n---\n" +
-        "Study the line breaks, punctuation, capitalization, and sentence length in those examples and write every post the same way.";
-    } else {
-      voiceInstruction = "Match this voice consistently: " + voiceDescriptions[state.voice];
-    }
-
-    var structureLibrary =
-      "TINY DECLARATION — one short punchy thought, 1-2 lines, no explanation after.\n" +
-      "IDENTITY — 'She's [trait]. She's [trait]. She's [desired identity]. She's you.' or 'The [specific person] reading this is about to [aspirational, non-guaranteed action].'\n" +
-      "NORMALIZE — 'Normalize [specific belief/behaviour/decision].' Usually one sentence; only add a second if it genuinely improves it.\n" +
-      "HOT TAKE — 'HOT TAKE: [contrarian belief]' then a short reframe/contrast, optional mic-drop line.\n" +
-      "REAL TALK — 'REAL TALK: [truth/problem]' then a reframe, then a short conclusion.\n" +
-      "NOBODY TALKS ABOUT — 'NOBODY TALKS ABOUT [overlooked truth].' then why it matters, then a short conclusion.\n" +
-      "POV — 'POV: [specific relatable/desirable scenario]' — visual and specific, usually 1-3 lines.\n" +
-      "DEAR ALGO — 'Dear algo, find me [very specific audience identity + desire/problem].' plus a short community line, usually 3-6 short lines.\n" +
-      "IF YOU ARE — 'If you're [specific audience identity/behaviour/desire], [recognition or community statement].'\n" +
-      "WHERE ARE — 'Where are the [specific people] who [specific belief/desire/action]?' — community/follower-magnet.\n" +
-      "REPEAT AFTER ME — 'REPEAT AFTER ME:' then a short belief/declaration.\n" +
-      "BREAKING — 'BREAKING:' then a specific news/result/development, then short meaning/context. Use only when the content genuinely supports this energy.\n" +
-      "BE HONEST — 'BE HONEST: [specific, interesting question]'. Never automatically add 'tell me in the replies.'\n" +
-      "BEFORE → AFTER — 'I used to [specific old behaviour]. Then [specific change]. Now [real result].' Only with a genuine experience the creator supplied.\n" +
-      "RESULT FIRST — '[real result] in [real timeframe]. [what wasn't required] [what actually contributed].' Only with real supplied proof.\n" +
-      "TIMELINE PROOF — 'In [timeframe]: [result] [result] [result] [short interpretation].' Only with real supplied proof.\n" +
-      "LIFESTYLE PROOF — 'I was [real activity] when [real result] happened. [what this demonstrates].' Only with a genuine supplied experience.\n" +
-      "SCREENSHOT/RECEIPT PROOF — 'This is what [real timeframe/action] looks like. [optional short context].' Only with supplied proof.\n" +
-      "PROBLEM → REFRAME — 'You think [surface problem]. But [actual problem/reframe]. [short takeaway].'\n" +
-      "OBSERVATION — 'Something I've noticed about [topic]: [specific observation]. [short implication].'\n" +
-      "LIST/BREAKDOWN — hook, then a numbered list, then a short conclusion. For teaching/authority posts where detail genuinely helps. Use selectively — not every post.";
-
-    var structureMapping =
-      "Reach favours: Tiny Declaration, Identity, Normalize, Hot Take, Nobody Talks About, POV, Repeat After Me, short observations, relatable/bold statements.\n" +
-      "Connection favours: Dear Algo, If You Are, Where Are, Be Honest, community identity, relatable questions, shared-experience posts.\n" +
-      "Authority favours: Real Talk, Hot Take, Nobody Talks About, Problem → Reframe, Observation, teaching/breakdown, lessons from genuine experience.\n" +
-      "Proof favours: Result First, Timeline Proof, Lifestyle Proof, Before → After, Screenshot/Receipt Proof, genuine case-study structures.\n" +
-      "Desire favours: POV, Identity, future scenario, possibility, transformation, relatable lifestyle outcome.\n" +
-      "Conversion favours: Problem → Solution, Proof → Product, Story → Product, Desire → Product, objection → reframe → product, direct but natural recommendation, short product mention.";
-
-    var lengthRules =
-      "Tiny Declaration: 1-2 lines max. Normalize: usually 1 sentence. Identity: 1-4 short lines. POV: usually 1-3 lines. " +
-      "Dear Algo: usually 3-6 short lines. Connection questions: often 1-3 lines. Hot Take/Real Talk: usually 2-6 short lines. " +
-      "Authority/Teaching: can be medium or longer when the idea needs explanation. Proof: can be medium or longer if context is genuinely needed. " +
-      "Conversion: length depends on the sales structure. If the punchline has landed, stop writing — do not explain a strong line until it gets weaker. Shorter is often stronger on Threads.";
-
-    var frameworkOverride = state.customFramework
-      ? "\n\nThis creator also has their own method they want you to build every post around — follow it as the primary process, on top of everything above:\n" + state.customFramework
-      : "";
-
-    var extraAvoid = state.customAvoid
-      ? " Also never use these words or vibes this creator specifically hates: " + state.customAvoid + "."
-      : "";
+    var vp = voiceParts();
+    var voiceInstruction = vp.voiceInstruction, frameworkOverride = vp.frameworkOverride, extraAvoid = vp.extraAvoid;
 
     var systemPrompt = "You write Threads posts using the ContentStack method. The category is the JOB of the post. The structure is HOW it's written. These are separate decisions — pick a job, then pick a structure that fits it, then write.\n\n" +
 
@@ -429,21 +572,21 @@
 
       "STRUCTURE-TO-JOB MAPPING (a guide, not a hard rule):\n" + structureMapping + "\n\n" +
 
-      "HIDDEN LABELS — never let an internal structure name leak into a post as a literal prefix, e.g. never write 'PROBLEM → REFRAME:', 'OBSERVATION:', 'WHERE ARE:', 'IF YOU ARE:', 'IDENTITY:', 'TINY DECLARATION:'. Natural hook words that a real person would actually type are fine as prefixes — REAL TALK:, HOT TAKE:, NOBODY TALKS ABOUT:, BE HONEST:, POV:, BREAKING:, NORMALIZE, REPEAT AFTER ME: — but 'Where are the affiliate marketers who...' is correct where 'WHERE ARE: The affiliate marketers who...' is not. The reader should never see evidence of the internal generation architecture.\n\n" +
+      RULE_HIDDEN +
 
-      "IDENTITY POSTS — should create recognition ('that's me') or aspiration ('that's who I'm becoming'), built from ambition, values, behaviour, beliefs, goals, personality, shared experience, or desired future identity. Avoid making the reader's primary identity their failure or dysfunction (e.g. never 'She's confused. She's frustrated. She's you.').\n\n" +
+      RULE_IDENTITY +
 
       "CONCEPT DIVERSITY — before writing, extract a concept bank from the creator's full profile: distinct pains, desires, beliefs, objections, experiences, audience identities, product benefits, transformations, topics, subtopics, frustrations, aspirations, misconceptions, proof, lifestyle angles, and community angles, adapted to their actual niche. Then assign genuinely different concepts across the batch. 'What converts', 'posts that convert', 'knowing what converts', and 'conversion strategy' are the SAME concept said five ways, not five concepts — swapping a word or the niche label while making the same underlying point is NOT diversity. The batch should feel like the creator has many distinct things to say, not one point restated.\n\n" +
 
       "LENGTH BY STRUCTURE: " + lengthRules + "\n\n" +
 
-      "HUMAN-SOUNDING RULES — this should read like someone opened Threads and typed a real thought, not polished marketing copy. Avoid: corporate language, motivational filler, excessive explanation, forced metaphors, fake profundity, three-part rhetorical lists as a default, generic 'content creator' language, LinkedIn-style mini essays, making every post educational, ending every post with a lesson, ending every Connection post with 'be honest in the replies,' unnecessary CTAs, unnecessary questions, and the words unlock, elevate, unleash, seamless, supercharge, revolutionize, game-changing, powerful solution, maximize your potential, take your content to the next level, crafted to, designed to empower, content that resonates, authentic engagement, leverage your audience, optimize your journey, transform your social presence, 'here's the truth,' or repetitive 'You don't need X. You need Y.'" + extraAvoid + " Do not repeat opener patterns like 'most people...', 'the reason...', 'imagine...', 'real question...', 'you're doing X because...', 'that's the difference...', 'that's the whole game...' more than is genuinely warranted. Some posts should be 5-10 words — don't be afraid of that.\n\n" +
+      ruleHuman(extraAvoid) +
 
-      "TRUTH RULE — NON-NEGOTIABLE: Never invent or infer personal experiences, client experiences, testimonials, quotations, case studies, credentials, results, revenue, follower counts, timeframes, statistics, anecdotes, conversations, or specific observations the creator did not supply. This includes Connection posts — never write 'I'll go first: someone asked me...', 'I once...', 'I got asked to...', 'I used to...' or similar unless the creator's profile actually gave you that experience. Only use proof explicitly supplied by the creator — you may reframe it, but never add detail to it, and one supplied result never gives permission to invent additional results. Never put words in quotation marks unless the creator supplied those exact words. If a structure would require information the creator hasn't provided, use a different structure instead — never insert a placeholder into the final output.\n\n" +
+      RULE_TRUTH +
 
-      "NEVER FABRICATE STRATEGY FACTS — no invented percentages, statistics, exact quantities, posting frequencies, algorithm behavior, platform facts, conversion claims, guaranteed strategies, 'this always works', 'this prints money', arbitrary timelines, or arbitrary income outcomes, unless the creator's profile explicitly supplied that information. If something is the creator's opinion or belief rather than a verified fact, write it as a perspective ('I think...', 'in my experience posting X felt like...' only if they said so) rather than stating it as an objective platform rule.\n\n" +
+      RULE_FABRICATE +
 
-      "NO INVENTED HYPOTHETICAL NUMBERS — this applies to Desire/POV posts too. Never write suspiciously specific invented results like 'POV: you wake up to 47 sales' or 'three people buy within the hour' unless those numbers come from real proof the creator supplied. A realistic, non-specific possibility is fine — 'POV: you wake up to another sale from something you posted yesterday' — because it doesn't manufacture invented specificity.\n\n" +
+      RULE_HYPO +
 
       "PRODUCT ACCURACY — the ONLY facts you know about the offer are the words in the 'What they sell' field. Refer to it by its name as a normal noun, written the way a person would say it, and never paste the price into a sentence as if it were part of the name or the thing (never 'the Content Stack $27 teaches you...'). Only mention the price if it reads naturally, like 'it's $27'. Describe what it does using only what the creator wrote there. If they only gave a name and a price, keep any mention of it to a short, honest pointer ('it's in my bio', 'I made something for this') and do not describe its contents, format, length or method. Never invent comparisons to other products ('no 6-hour course', 'no fluff'), never say it teaches, trains, coaches or guarantees something unless they said so, and never say what it is not. If the offer can't support a full Conversion post, write the post around the problem or desire instead and keep the product mention minimal. Never expand what the creator's offer does beyond what they told you. If it helps someone create content, don't turn that into a claim that it predicts what will convert or guarantees a result today. Before mentioning the offer, silently check whether the creator's own description actually supports the exact claim you're about to make — explain real benefits and use cases, never invent capabilities, guarantees, or outcomes.\n\n" +
 
@@ -503,6 +646,15 @@
   $("generate-btn").addEventListener("click", async function(){
     state.proof = $("proof").value.trim();
     state.worked = $("worked").value.trim();
+    saveProfile();
+    if(dailyMode){
+      dailyMode = false;
+      dailyScreen = "form";
+      goToStep(1);
+      renderDailyForm();
+      updateView();
+      return;
+    }
     var btn = $("generate-btn");
     var originalText = btn.textContent;
     btn.disabled = true;
@@ -510,8 +662,8 @@
     try{
       var results = await generateIdeas();
       renderResults(results);
-      $("wizard").style.display = "none";
-      $("result-step").style.display = "block";
+      ideasHasResults = true;
+      updateView();
     } catch(err){
       alert("Something went wrong generating your ideas. Please try again.\n\n" + err.message);
     } finally {
@@ -613,10 +765,390 @@
     $("custom-voice-wrap").style.display = "none";
     document.querySelectorAll("#stage-grid .choice-opt").forEach(function(o){ o.classList.remove("selected"); });
     document.querySelector('#stage-grid .choice-opt[data-stage="growing"]').classList.add("selected");
-    $("result-step").style.display = "none";
-    $("wizard").style.display = "block";
+    ideasHasResults = false;
+    dailyMode = false;
+    dailyScreen = "form";
+    lsDel("cs_profile_v1");
+    updateView();
     goToStep(1);
   });
+
+  // ================= Profile persistence =================
+  function saveProfile(){
+    lsSet("cs_profile_v1", {
+      niche:state.niche, audience:state.audience, talkabout:state.talkabout, sell:state.sell, problem:state.problem, result:state.result,
+      voice:state.voice, customFramework:state.customFramework, customExamples:state.customExamples, customAvoid:state.customAvoid,
+      stage:state.stage, proof:state.proof, worked:state.worked, pillarInputs:defaultPillars
+    });
+  }
+  function profileComplete(){
+    return !!(state.niche && state.audience && state.talkabout && state.problem && state.result);
+  }
+  function loadProfile(){
+    var saved = lsGet("cs_profile_v1");
+    if(!saved || typeof saved !== "object") return;
+    ["niche","audience","talkabout","sell","problem","result","customFramework","customExamples","customAvoid","proof","worked"].forEach(function(k){
+      if(typeof saved[k] === "string") state[k] = saved[k];
+    });
+    if(saved.voice === "custom" || voiceDescriptions[saved.voice]) state.voice = saved.voice;
+    if(saved.stage === "growing" || saved.stage === "selling" || saved.stage === "both") state.stage = saved.stage;
+    if(Array.isArray(saved.pillarInputs)){
+      var pi = saved.pillarInputs.filter(function(x){ return typeof x === "string"; }).slice(0,5);
+      while(pi.length < 3) pi.push("");
+      defaultPillars = pi;
+      renderPillars();
+    }
+    var idMap = { niche:"niche", audience:"audience", talkabout:"talkabout", sell:"sell", problem:"problem", result:"result",
+      customFramework:"custom-framework", customExamples:"custom-examples", customAvoid:"custom-avoid", proof:"proof", worked:"worked" };
+    Object.keys(idMap).forEach(function(k){ $(idMap[k]).value = state[k]; });
+    document.querySelectorAll("#voice-grid .choice-opt").forEach(function(o){ o.classList.toggle("selected", o.dataset.voice === state.voice); });
+    document.querySelectorAll("#stage-grid .choice-opt").forEach(function(o){ o.classList.toggle("selected", o.dataset.stage === state.stage); });
+    $("custom-voice-wrap").style.display = state.voice === "custom" ? "block" : "none";
+  }
+
+  // ================= View switching =================
+  function updateView(){
+    var wiz = (tab === "ideas" && !ideasHasResults) || (tab === "daily" && dailyScreen === "wizard");
+    $("wizard").style.display = wiz ? "block" : "none";
+    $("result-step").style.display = (tab === "ideas" && ideasHasResults) ? "block" : "none";
+    $("daily-view").style.display = (tab === "daily" && dailyScreen !== "wizard") ? "block" : "none";
+    $("daily-form").style.display = dailyScreen === "form" ? "block" : "none";
+    $("daily-result").style.display = dailyScreen === "result" ? "block" : "none";
+  }
+  function startDailyWizard(){
+    dailyMode = true;
+    dailyScreen = "wizard";
+    goToStep(1);
+    updateView();
+  }
+  function showTab(t){
+    tab = t;
+    document.querySelectorAll(".tab").forEach(function(b){ b.classList.toggle("active", b.dataset.tab === t); });
+    if(t === "daily"){
+      if(!profileComplete()){
+        startDailyWizard();
+      } else {
+        if(dailyMode){ dailyMode = false; goToStep(1); }
+        if(dailyScreen !== "result") dailyScreen = "form";
+        renderDailyForm();
+      }
+    } else if(dailyMode){
+      dailyMode = false;
+      goToStep(1);
+    }
+    updateView();
+  }
+  document.querySelectorAll(".tab").forEach(function(b){
+    b.addEventListener("click", function(){ showTab(b.dataset.tab); });
+  });
+
+  // ================= Products + daily settings =================
+  var products = lsGet("cs_products_v1");
+  if(!Array.isArray(products)) products = [];
+  products = products.filter(function(p){ return p && typeof p.id === "string" && typeof p.name === "string"; });
+  var dset = lsGet("cs_daily_v1") || {};
+  var dailyCount = Math.min(15, Math.max(1, parseInt(dset.count, 10) || 5));
+  var selectedProduct = typeof dset.productId === "string" ? dset.productId : "none";
+  if(selectedProduct !== "none" && !products.some(function(p){ return p.id === selectedProduct; })) selectedProduct = "none";
+  var editingId = null;
+  var lastDaily = null;
+
+  function saveProducts(){ lsSet("cs_products_v1", products); }
+  function saveDailySettings(){ lsSet("cs_daily_v1", { count:dailyCount, productId:selectedProduct }); }
+  function getProduct(){
+    for(var i = 0; i < products.length; i++){ if(products[i].id === selectedProduct) return products[i]; }
+    return null;
+  }
+
+  function productCard(p, editable){
+    var card = document.createElement("div");
+    card.className = "choice-opt" + (selectedProduct === p.id ? " selected" : "");
+    var name = document.createElement("strong");
+    name.textContent = p.name;
+    var desc = document.createElement("span");
+    var d = p.desc || "";
+    desc.textContent = d.length > 90 ? d.slice(0, 90) + "..." : d;
+    card.appendChild(name);
+    card.appendChild(desc);
+    if(editable){
+      var acts = document.createElement("div");
+      acts.className = "prod-actions";
+      var ed = document.createElement("button");
+      ed.className = "link-btn";
+      ed.textContent = "Edit";
+      ed.addEventListener("click", function(e){ e.stopPropagation(); openProductForm(p); });
+      var rm = document.createElement("button");
+      rm.className = "link-btn";
+      rm.textContent = "Remove";
+      rm.addEventListener("click", function(e){
+        e.stopPropagation();
+        if(!confirm("Remove " + p.name + "?")) return;
+        products = products.filter(function(x){ return x.id !== p.id; });
+        if(selectedProduct === p.id) selectedProduct = "none";
+        saveProducts(); saveDailySettings();
+        closeProductForm();
+        renderDailyForm();
+      });
+      acts.appendChild(ed);
+      acts.appendChild(rm);
+      card.appendChild(acts);
+    }
+    card.addEventListener("click", function(){
+      selectedProduct = p.id;
+      saveDailySettings();
+      renderDailyForm();
+    });
+    return card;
+  }
+
+  function renderDailyForm(){
+    $("count-val").textContent = dailyCount;
+    $("daily-who").textContent = "Writing for " + state.audience + " about " + state.talkabout + ".";
+    var list = $("product-list");
+    list.innerHTML = "";
+    list.appendChild(productCard({ id:"none", name:"Nothing today", desc:"Just grow. No product gets mentioned." }, false));
+    products.forEach(function(p){ list.appendChild(productCard(p, true)); });
+  }
+
+  function openProductForm(p){
+    editingId = p ? p.id : null;
+    $("pf-name").value = p ? p.name : "";
+    $("pf-desc").value = p ? (p.desc || "") : "";
+    $("pf-price").value = p ? (p.price || "") : "";
+    $("pf-link").value = p ? (p.link || "") : "";
+    $("pf-exp").value = p ? (p.exp || "") : "";
+    $("pf-error").textContent = "";
+    $("product-form").style.display = "block";
+    $("add-product-btn").style.display = "none";
+  }
+  function closeProductForm(){
+    editingId = null;
+    $("product-form").style.display = "none";
+    $("add-product-btn").style.display = "block";
+  }
+  $("add-product-btn").addEventListener("click", function(){ openProductForm(null); });
+  $("pf-cancel").addEventListener("click", closeProductForm);
+  $("pf-save").addEventListener("click", function(){
+    var name = $("pf-name").value.trim();
+    var desc = $("pf-desc").value.trim();
+    if(!name || !desc){
+      $("pf-error").textContent = "Add a name and what it does. The posts can only use what you write here.";
+      return;
+    }
+    var rec = { name:name, desc:desc, price:$("pf-price").value.trim(), link:$("pf-link").value.trim(), exp:$("pf-exp").value.trim() };
+    if(editingId){
+      products = products.map(function(p){ return p.id === editingId ? Object.assign({ id:p.id }, rec) : p; });
+      selectedProduct = editingId;
+    } else {
+      rec.id = "p" + Date.now() + Math.floor(Math.random() * 1000);
+      products.push(rec);
+      selectedProduct = rec.id;
+    }
+    saveProducts(); saveDailySettings();
+    closeProductForm();
+    renderDailyForm();
+  });
+
+  $("count-minus").addEventListener("click", function(){ if(dailyCount > 1){ dailyCount--; saveDailySettings(); $("count-val").textContent = dailyCount; } });
+  $("count-plus").addEventListener("click", function(){ if(dailyCount < 15){ dailyCount++; saveDailySettings(); $("count-val").textContent = dailyCount; } });
+  $("edit-profile-btn").addEventListener("click", function(){ startDailyWizard(); });
+
+  // ================= Daily generation =================
+  function dailyPlan(n, hasProduct, hasProof){
+    var cycle = hasProof ? ["Reach","Connection","Authority","Proof","Desire"] : ["Reach","Connection","Authority","Desire"];
+    var plan = [];
+    var convIdx = [];
+    if(hasProduct){
+      var c = Math.min(3, Math.max(1, Math.round(n * 0.25)));
+      for(var k = 1; k <= c; k++){
+        var idx = n === 1 ? 0 : Math.max(1, Math.min(n - 1, Math.round(n * k / (c + 1))));
+        while(convIdx.indexOf(idx) !== -1 && idx < n - 1) idx++;
+        convIdx.push(idx);
+      }
+    }
+    var ci = 0;
+    for(var i = 0; i < n; i++){
+      if(convIdx.indexOf(i) !== -1){ plan.push("Conversion"); }
+      else { plan.push(cycle[ci % cycle.length]); ci++; }
+    }
+    var alt = 0;
+    convIdx.forEach(function(idx){
+      if(idx > 0 && plan[idx - 1] !== "Conversion" && (plan[idx - 1] === "Reach" || plan[idx - 1] === "Connection")){
+        plan[idx - 1] = (alt++ % 2 === 0) ? "Authority" : "Desire";
+      }
+    });
+    return plan;
+  }
+
+  async function generateDaily(n, product){
+    var vp = voiceParts();
+    var plan = dailyPlan(n, !!product, !!state.proof);
+    var hasLink = !!(product && product.link);
+
+    var dayStrategy = product
+      ? "PRODUCT DAY — today the creator is promoting one specific product (details below). The Conversion posts move people toward it. Every other post in today's plan must stand on its own and must NOT mention the product: they speak to the audience's problem, desire, beliefs and identity so that the Conversion posts feel like a natural next step. The post immediately before each Conversion post should set up the problem or desire the product addresses without naming the product."
+      : "GROWTH DAY — nothing is being promoted today. No post may mention or hint at any offer, product, link or sale. Every post exists to reach new people, build connection, show expertise, or build desire, with the right audience.";
+
+    var productRule = product
+      ? "PRODUCT ACCURACY — the ONLY facts you know about today's product are the words in the product block of the user message. Refer to it by its name as a normal noun, never paste the price into a sentence as if it were part of the name, and mention the price only if it reads naturally. Describe what it does using only what the creator wrote there. Never invent features, bonuses, discounts, deadlines, scarcity, comparisons with other products, results, guarantees, or who it is 'perfect for' beyond what was supplied. The creator is RECOMMENDING this product; it may be an affiliate product that isn't theirs. Unless the 'creator's own real experience' line gives an experience, NEVER write that they use it, tried it, bought it, love it, switched to it or got a result from it, and never invent what other people said about it. With no experience supplied, write as a grounded recommendation built on what the product does and the problem it solves. If an experience is supplied, use only those facts and add nothing. If the product details are thin (for example only a name), keep Conversion posts short and honest and build them around the problem or desire; do not describe its contents, format or method. Never put a URL in a post and never write 'link in bio'. " +
+        (hasLink ? "A link has been supplied and will be shown to the creator for a pinned reply, so a Conversion post may end with a short pointer such as 'link in the pinned reply' where it reads naturally, but not every time." : "No link was supplied, so no post may point to a link at all.") +
+        " If one product detail doesn't support a claim, don't make the claim.\n\n" +
+        "SALES POSTS SHOULD NOT ALL SOUND LIKE ADS — if there is more than one Conversion post, give each a different angle (problem-led, desire-led, objection, plain recommendation, short mention). Never announce a 'system' or say 'click here'.\n\n"
+      : "";
+
+    var systemPrompt = "You write one day's worth of Threads posts using the ContentStack method. The category is the JOB of the post. The structure is HOW it's written. These are separate decisions: take each post's assigned job, pick a structure that fits it, then write.\n\n" +
+      "TODAY'S POSTS: write exactly " + n + " post" + (n === 1 ? "" : "s") + ", in the exact order and with the exact jobs listed in the user message. That order is the order the creator will post them across the day, so the sequence should feel varied and natural.\n\n" +
+      "JOBS — Reach (short, shareable, reaches new people), Connection (conversation, community, opinions), Authority (a lesson, mistake, framework, useful insight), Proof (a real result or milestone, only from supplied proof), Desire (the outcome or transformation the audience wants), Conversion (connects a real problem or desire to today's product naturally, without sounding like an ad).\n\n" +
+      dayStrategy + "\n\n" +
+      "REACH IS NOT AUTHORITY — a Reach post makes someone stop, relate, share, follow or get curious; it can be 5-15 words and teach nothing. A short sentence that still teaches a lesson is Authority, not Reach.\n\n" +
+      "STRUCTURE LIBRARY — abstract writing architectures, not finished templates. Shape an original post around the creator's real niche, audience, beliefs and proof using one as skeleton; never reproduce them word-for-word. Use a different structure for each post today" + (n > 12 ? " (a structure may repeat once at most)" : "") + ":\n" + structureLibrary + "\n\n" +
+      "STRUCTURE-TO-JOB MAPPING (a guide, not a hard rule):\n" + structureMapping + "\n\n" +
+      RULE_HIDDEN + "\n\n" +
+      RULE_IDENTITY + "\n\n" +
+      "CONCEPT DIVERSITY — every post today must carry a genuinely different concept (a different pain, desire, belief, objection, identity or angle). Swapping a word while making the same point is not diversity. The day should feel like one person with many distinct things to say.\n\n" +
+      "LENGTH BY STRUCTURE: " + lengthRules + "\n\n" +
+      ruleHuman(vp.extraAvoid) + "\n\n" +
+      RULE_TRUTH + "\n\n" +
+      RULE_FABRICATE + "\n\n" +
+      RULE_HYPO + "\n\n" +
+      productRule +
+      "VOICE OVERRIDES EVERYTHING ELSE: " + vp.voiceInstruction + " The structure is the skeleton; the creator's voice is what fills it.\n\n" +
+      "ORIGINALITY: never reproduce another creator's specific wording. Generate genuinely original content from this creator's own profile, ideas and proof." + vp.frameworkOverride + "\n\n" +
+      "FINAL INTERNAL CHECK — before returning, silently verify: exactly " + n + " posts; each matches its assigned job in the given order; no internal structure label leaks into the text; concepts are all different; no claim, statistic, number, story or experience is fabricated; " + (product ? "non-Conversion posts don't mention the product; no product claim goes beyond the product block; no URL appears; " : "no post mentions an offer; ") + "nothing could be shorter without losing meaning; hooks aren't repeated; it sounds like one real person native to Threads, not AI marketing copy. Rewrite anything that fails.\n\n" +
+      "Return ONLY raw JSON, no markdown fences, no preamble. Format: {\"posts\":[{\"job\":\"<the assigned job>\",\"post\":\"<the full post text, with real \\n line breaks where the post has multiple lines>\"}]}. The array must contain exactly " + n + " items in the assigned order.";
+
+    var productBlock = product
+      ? "TODAY'S PRODUCT:\n" +
+        "Name: " + product.name + "\n" +
+        "What it is and what it does (the ONLY facts you know): " + product.desc + "\n" +
+        "Price: " + (product.price || "not supplied") + "\n" +
+        "Link: " + (hasLink ? "supplied, goes in a pinned reply, never write the URL in a post" : "none") + "\n" +
+        "Creator's own real experience with it: " + (product.exp || "none supplied. Do NOT claim they have used it or got any result from it.") + "\n\n"
+      : "TODAY'S PRODUCT: none. This is a growth day.\n\n";
+
+    var userPrompt = "Niche: " + state.niche + "\n" +
+      "Audience: " + state.audience + "\n" +
+      "What they talk about: " + state.talkabout + "\n" +
+      "Audience's problem: " + state.problem + "\n" +
+      "Result audience wants: " + state.result + "\n" +
+      "Real proof supplied: " + (state.proof || "none supplied") + "\n" +
+      "What's already worked for them: " + (state.worked || "nothing supplied") + "\n\n" +
+      productBlock +
+      "Today's plan, exactly " + n + " post" + (n === 1 ? "" : "s") + " in posting order:\n" +
+      plan.map(function(j, i){ return (i + 1) + ". " + j; }).join("\n") + "\n\n" +
+      "Respond with only the JSON object.";
+
+    var response = await fetch("/.netlify/functions/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 3500,
+        system: systemPrompt,
+        messages: [{ role: "user", content: userPrompt }]
+      })
+    });
+    if(!response.ok){
+      var errBody = "";
+      try { errBody = await response.text(); } catch(e){}
+      throw new Error("Request failed (" + response.status + "). " + errBody);
+    }
+    var data = await response.json();
+    var rawText = (data.content || []).map(function(b){ return b.type === "text" ? b.text : ""; }).join("");
+    var cleaned = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
+    var parsed = JSON.parse(cleaned);
+    if(!parsed.posts || !Array.isArray(parsed.posts) || !parsed.posts.length){ throw new Error("Unexpected response format"); }
+    return parsed.posts.slice(0, n).map(function(item, i){
+      return { post: String(item.post || ""), job: plan[i] || item.job || "Reach" };
+    }).filter(function(x){ return x.post; });
+  }
+
+  function renderDaily(posts, product){
+    var body = $("daily-body");
+    body.innerHTML = "";
+    var parts = [];
+    posts.forEach(function(item, i){
+      var card = document.createElement("div");
+      card.className = "idea-card";
+      var top = document.createElement("div");
+      top.className = "idea-top";
+      var num = document.createElement("div");
+      num.className = "idea-num";
+      num.textContent = "Post " + (i + 1);
+      var tag = document.createElement("div");
+      tag.className = "job-tag";
+      tag.textContent = item.job;
+      tag.style.background = jobColors[item.job] || "var(--ink-soft)";
+      top.appendChild(num);
+      top.appendChild(tag);
+      var text = document.createElement("div");
+      text.className = "idea-text";
+      text.textContent = item.post;
+      var copyBtn = document.createElement("button");
+      copyBtn.className = "copy-one";
+      copyBtn.textContent = "Copy";
+      (function(t, b){
+        b.addEventListener("click", function(){
+          copyToClipboard(t);
+          b.textContent = "Copied";
+          b.classList.add("copied");
+          setTimeout(function(){ b.textContent = "Copy"; b.classList.remove("copied"); }, 1400);
+        });
+      })(item.post, copyBtn);
+      card.appendChild(top);
+      card.appendChild(text);
+      card.appendChild(copyBtn);
+      body.appendChild(card);
+      parts.push("POST " + (i + 1) + " [" + item.job + "]\n" + item.post);
+    });
+    window.__contentstack_daily = parts.join("\n\n");
+    $("daily-sub").textContent = posts.length + " post" + (posts.length === 1 ? "" : "s") + (product ? " promoting " + product.name : " for growth") + ", in the order to post them.";
+    var hasLink = !!(product && product.link);
+    $("daily-link-box").style.display = hasLink ? "block" : "none";
+    $("daily-link-text").textContent = hasLink ? product.link : "";
+    $("daily-disclosure").style.display = product ? "block" : "none";
+  }
+
+  async function runDaily(btn){
+    var originalText = btn.textContent;
+    var n = lastDaily && btn.id === "daily-regen" ? lastDaily.n : dailyCount;
+    var product = lastDaily && btn.id === "daily-regen" ? lastDaily.product : getProduct();
+    btn.disabled = true;
+    btn.textContent = "Writing...";
+    try{
+      var posts = await generateDaily(n, product);
+      lastDaily = { n:n, product:product };
+      renderDaily(posts, product);
+      dailyScreen = "result";
+      updateView();
+      window.scrollTo(0, 0);
+    } catch(err){
+      alert("Something went wrong writing your posts. Please try again.\n\n" + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
+  }
+  $("daily-generate-btn").addEventListener("click", function(){ runDaily($("daily-generate-btn")); });
+  $("daily-regen").addEventListener("click", function(){ runDaily($("daily-regen")); });
+  $("daily-change").addEventListener("click", function(){ dailyScreen = "form"; renderDailyForm(); updateView(); });
+  $("daily-copy-all").addEventListener("click", function(){
+    copyToClipboard(window.__contentstack_daily || "");
+    $("daily-copy-all").textContent = "Copied all!";
+    setTimeout(function(){ $("daily-copy-all").textContent = "Copy all"; }, 1600);
+  });
+  $("daily-link-copy").addEventListener("click", function(){
+    var p = lastDaily && lastDaily.product;
+    if(!p || !p.link) return;
+    copyToClipboard(p.link);
+    $("daily-link-copy").textContent = "Copied";
+    setTimeout(function(){ $("daily-link-copy").textContent = "Copy link"; }, 1400);
+  });
+
+  // ---- init ----
+  loadProfile();
+  updateView();
+  setStepLabels();
 
 })();
 </script>
